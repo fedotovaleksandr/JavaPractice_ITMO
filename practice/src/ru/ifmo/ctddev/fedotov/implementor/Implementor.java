@@ -5,10 +5,8 @@ import info.kgeorgiy.java.advanced.implementor.ImplerException;
 import info.kgeorgiy.java.advanced.implementor.JarImpler;
 import net.java.quickcheck.collection.Pair;
 
-import javax.swing.*;
 import java.io.File;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -45,9 +43,6 @@ public class Implementor implements JarImpler {
                 path
         );
 
-
-
-
     }
 
     private File createClassFile(String fileName, String packageName, Path path) throws ImplerException {
@@ -60,33 +55,41 @@ public class Implementor implements JarImpler {
         return classPath.toFile();
     }
 
-    interface  ClassNodeInterface {
-        public Pair<String,Set<String>> build() ;
-        public ClassNodeInterface addNode(ClassNodeInterface classNode,Integer priority);
+    interface ClassNodeInterface {
+        public Pair build();
+
+        public ClassNodeInterface addNode(ClassNodeInterface classNode, Integer priority);
 
     }
-    abstract class AbstractClassNode implements ClassNodeInterface{
-        protected ArrayList<Pair<Integer,ClassNodeInterface>> nodes = new ArrayList<>();
+
+    abstract class AbstractClassNode implements ClassNodeInterface {
+        //
+        protected ArrayList<Pair<Integer, ClassNodeInterface>> nodes = new ArrayList<>();
+
         @Override
         public ClassNodeInterface addNode(ClassNodeInterface classNode, Integer priority) {
-            nodes.add(priority,new Pair<Integer, ClassNodeInterface>(nodes.size(),classNode));
+            nodes.add(priority, new Pair<Integer, ClassNodeInterface>(nodes.size(), classNode));
             return this;
         }
+
         protected abstract String getStartSource();
+
         protected abstract String getEndSource();
+
         protected abstract Set<String> getImports();
+
         @Override
         public Pair<String, Set<String>> build() {
             StringBuilder sb = new StringBuilder();
-            Set<String>  set = new HashSet<>();
+            Set<String> set = new HashSet<>();
             sb.append(this.getStartSource());
             //inner
             ArrayList<Pair<String, Set<String>>> nodesTowrite = new ArrayList<>();
-            for (Pair<Integer, ClassNodeInterface> node:this.nodes) {
+            for (Pair<Integer, ClassNodeInterface> node : this.nodes) {
                 Pair<String, Set<String>> nodeResult = node.getSecond().build();
-                nodesTowrite.add(node.getFirst(),nodeResult);
+                nodesTowrite.add(node.getFirst(), nodeResult);
             }
-            for (Pair<String, Set<String>> node:nodesTowrite) {
+            for (Pair<String, Set<String>> node : nodesTowrite) {
                 set.addAll(node.getSecond());
                 sb.append(node.getFirst());
             }
@@ -115,7 +118,7 @@ public class Implementor implements JarImpler {
         }
     }
 
-    class ClassNodeImports  implements ClassNodeInterface {
+    class ClassNodeImports implements ClassNodeInterface {
         private final Set<String> imports;
 
         public ClassNodeImports(Set<String> imports) {
@@ -125,7 +128,7 @@ public class Implementor implements JarImpler {
         @Override
         public Pair<String, Set<String>> build() {
             StringBuilder sb = new StringBuilder();
-            Set<String>  set = new HashSet<>();
+            Set<String> set = new HashSet<>();
             this.imports.forEach(importString -> sb
                     .append("import ")
                     .append(importString)
@@ -143,14 +146,24 @@ public class Implementor implements JarImpler {
 
     class ClassNode extends AbstractClassNode implements ClassNodeInterface {
 
+        private final Class<?> aClass;
+
+        public ClassNode(Class<?> aClass) {
+            this.aClass = aClass;
+        }
+
         @Override
         protected String getStartSource() {
-            return null;
+            return String.format("public class {0} {1} {2} '{'",
+                    aClass.getSimpleName() + "Impl",
+                    aClass.isInterface() ? "implements" : "extends",
+                    aClass.getSimpleName()) +
+                    System.lineSeparator();
         }
 
         @Override
         protected String getEndSource() {
-            return null;
+            return "}";
         }
 
         @Override
@@ -159,6 +172,27 @@ public class Implementor implements JarImpler {
         }
     }
 
+    class ClassNodeConstructors implements ClassNodeInterface {
+
+        private final Class<?> aClass;
+
+        public ClassNodeConstructors(Class<?> aClass) {
+            this.aClass = aClass;
+        }
+
+
+        @Override
+        public Pair<String, Set<String>> build() {
+            StringBuilder sb = new StringBuilder();
+            Set<String> set = new HashSet<>();
+            return new Pair<>(sb.toString(), set);
+        }
+
+        @Override
+        public ClassNodeInterface addNode(ClassNodeInterface classNode, Integer priority) {
+            return this;
+        }
+    }
 
 
     class OptionResolver {
@@ -170,7 +204,7 @@ public class Implementor implements JarImpler {
             this.args = new ArrayList<>();
         }
 
-        public  OptionResolver addArg(String aliasName, String defaultValue) {
+        public OptionResolver addArg(String aliasName, String defaultValue) {
 
             Pair<String, String> nPair = new Pair<>(aliasName, defaultValue);
             args.add(argcLength, nPair);
