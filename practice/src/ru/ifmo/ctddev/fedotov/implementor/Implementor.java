@@ -80,7 +80,7 @@ public class Implementor implements JarImpler {
         args.add(root.toString());
         final int exitCode = compiler.run(null, System.out, System.err, args.toArray(new String[args.size()]));
         if (exitCode != 0) {
-            throw new ImplerException(String.format("Can't compile file {0}!", root.resolve(file)));
+            throw new ImplerException(String.format("Can't compile file %1s!", root.resolve(file)));
         }
     }
 
@@ -263,7 +263,7 @@ public class Implementor implements JarImpler {
 
         @Override
         protected String getStartSource() {
-            return String.format("public class {0} {1} {2} '{'",
+            return String.format("public class %1s %2s %3s {",
                     aClass.getSimpleName() + "Impl",
                     aClass.isInterface() ? "implements" : "extends",
                     aClass.getSimpleName()) +
@@ -312,7 +312,7 @@ public class Implementor implements JarImpler {
             for (Constructor<?> constructor : constructors) {
                 final Triple<String, Set<String>, List<String>> parametersWithImports = generateParameters(constructor);
                 final Pair<String, Set<String>> exceptionsWithImports = getThrownExceptions(constructor);
-                sb.append(String.format("    {0} {1}({2}) {3} '{'",
+                sb.append(String.format("    %1s %2s(%3s) %4s {",
                         patterns.get("remove_modifiers")
                                 .matcher(
                                         Modifier.toString(constructor.getModifiers())
@@ -401,7 +401,7 @@ public class Implementor implements JarImpler {
                 .reduce((s, s2) -> s + s2);
         if (optionalResult.isPresent()) {
             final String result = optionalResult.get();
-            return String.format("super({0});", result.substring(0, result.length() - 1));
+            return String.format("super(%1);", result.substring(0, result.length() - 1));
         } else {
             return "";
         }
@@ -461,7 +461,7 @@ public class Implementor implements JarImpler {
     public static void main(String[] args) throws ClassNotFoundException, ImplerException {
 
         Implementor imp = new Implementor(args);
-        Path p = FileSystems.getDefault().getPath("~/IdeaProjects/JavaPractice_ITMO/out");
+        Path p = FileSystems.getDefault().getPath("~/IdeaProjects/JavaPractice_ITMO/out/");
         imp.implement(Class.forName(imp.args.get("classname")), p);
     }
 
@@ -500,23 +500,17 @@ public class Implementor implements JarImpler {
             for (Method method : methods) {
                 final Pair<String, Set<String>> parametersWithImports = generateParameters(method);
                 sb.append("    @Override").append(System.lineSeparator());
-                new Formatter().format("    {0}{1} {2}({3}) {4} '{'", patterns.get("remove_modifiers")
+                sb.append(String.format("    %1s%2s %3s(%4s %5s) {",
+                        patterns.get("remove_modifiers")
                                 .matcher(Modifier.toString(method.getModifiers()))
                                 .replaceAll(Matcher.quoteReplacement("")),
                         method.getReturnType().getSimpleName(),
                         method.getName(),
                         parametersWithImports.getFirst(),
-                        "").toString();
-                sb.append(new Formatter().format("    {0}{1} {2}({3}) {4} '{'", patterns.get("remove_modifiers")
-                                .matcher(Modifier.toString(method.getModifiers()))
-                                .replaceAll(Matcher.quoteReplacement("")),
-                        method.getReturnType().getSimpleName(),
-                        method.getName(),
-                        parametersWithImports.getFirst(),
-                        "").toString())
+                        ""))
                         .append(System.lineSeparator());
 
-                sb.append(String.format("        return{0};", getDefaultValue(method.getReturnType()))).append(System.lineSeparator());
+                sb.append(String.format("        return %1s;", getDefaultValue(method.getReturnType()))).append(System.lineSeparator());
                 sb.append("    }").append(System.lineSeparator());
                 final Optional<String> importStringOptional = getImportForReferenceType(method.getReturnType());
                 if (importStringOptional.isPresent()) {
