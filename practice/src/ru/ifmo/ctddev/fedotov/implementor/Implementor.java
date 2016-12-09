@@ -158,7 +158,6 @@ public class Implementor implements JarImpler {
             Set<String> set = new HashSet<>();
             sb.append(this.getStartSource());
             //inner
-            ArrayList<Pair<String, Set<String>>> nodesTowrite = new ArrayList<>();
             for (ClassNodeInterface node : this.nodes) {
                 Pair<String, Set<String>> nodeResult = node.build();
                 set.addAll(nodeResult.getSecond());
@@ -194,7 +193,7 @@ public class Implementor implements JarImpler {
             Set<String> set = new HashSet<>();
 
             sb.append("package ")
-                    .append(aClass.getPackage().getName()).append(System.lineSeparator())
+                    .append(aClass.getPackage().getName())
                     .append(";")
                     .append(System.lineSeparator());
 
@@ -210,7 +209,7 @@ public class Implementor implements JarImpler {
             Pair<String, Set<String>> importResult = this.importNode.get().setImports(set).build();
 
             sb.append(importResult.getFirst());
-            sb.append(sbForAnother);
+            sb.append(sbForAnother.toString());
 
             return new Pair<>(sb.toString(), set);
         }
@@ -244,6 +243,7 @@ public class Implementor implements JarImpler {
                     .append(";")
                     .append(System.lineSeparator()));
             sb.append(System.lineSeparator());
+
             return new Pair<String, Set<String>>(sb.toString(), set);
         }
 
@@ -253,7 +253,7 @@ public class Implementor implements JarImpler {
         }
     }
 
-    class ClassNode extends AbstractClassNode implements ClassNodeInterface {
+    class ClassNode extends AbstractClassNode {
 
         private final Class<?> aClass;
 
@@ -320,7 +320,8 @@ public class Implementor implements JarImpler {
                                 .replaceAll(Matcher.quoteReplacement("")),
                         this.aClass.getSimpleName() + "Impl",
                         parametersWithImports.getFirst(),
-                        exceptionsWithImports.getFirst())).append(System.lineSeparator());
+                        exceptionsWithImports.getFirst())
+                ).append(System.lineSeparator());
                 sb.append("        ").append(getSuperCall(parametersWithImports.getThird())).append(System.lineSeparator());
                 sb.append("    }").append(System.lineSeparator());
                 set.addAll(parametersWithImports.getSecond());
@@ -369,6 +370,7 @@ public class Implementor implements JarImpler {
                         .append(' ')
                         .append(parameterName)
                         .append(',');
+                if
                 parameters.add(parameterName);
                 final Optional<String> importStringOptional = getImportForReferenceType(parameter);
                 if (importStringOptional.isPresent()) {
@@ -461,7 +463,7 @@ public class Implementor implements JarImpler {
     public static void main(String[] args) throws ClassNotFoundException, ImplerException {
 
         Implementor imp = new Implementor(args);
-        Path p = FileSystems.getDefault().getPath("~/IdeaProjects/JavaPractice_ITMO/out/");
+        Path p = FileSystems.getDefault().getPath("/home/aleksandr/IdeaProjects/JavaPractice_ITMO/out/");
         imp.implement(Class.forName(imp.args.get("classname")), p);
     }
 
@@ -483,7 +485,7 @@ public class Implementor implements JarImpler {
             final Collection<Method> methods = getOverriddableMethods(aClass);
 
             final Pair<String, Set<String>> methodsStringWithImports = generateMethods(methods);
-
+            sb.append(methodsStringWithImports.getFirst());
             return new Pair<>(sb.toString(), set);
         }
 
