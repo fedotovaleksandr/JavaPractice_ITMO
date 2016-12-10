@@ -1,0 +1,7 @@
+Manifest-Version: 1.0
+Class-Path: WalkTest.jar ArraySetTest.jar HelloUDPTest.jar WebCrawlerT
+ est.jar ImplementorTest.jar ParallelMapperTest.jar IterativeParalleli
+ smTest.jar junit-4.11.jar junit-4.12.jar jsoup-1.8.1.jar quickcheck-0
+ .6.jar hamcrest-core-1.3.jar
+Main-Class: ru.ifmo.ctddev.fedotov.implementor.Implementor
+

@@ -1,0 +1,1 @@
+java -Dfile.encoding=UTF8 -cp artifacts/*;lib/*;out;"C:/Program Files/Java/jdk1.8.0_40/bin/tools.jar" info.kgeorgiy.java.advanced.walk.Tester Walk ru.ifmo.ctddev.fedotov.walk.Walk

@@ -1,6 +1,7 @@
 package ru.ifmo.ctddev.fedotov.implementor;
 
 
+import info.kgeorgiy.java.advanced.implementor.Impler;
 import info.kgeorgiy.java.advanced.implementor.ImplerException;
 import info.kgeorgiy.java.advanced.implementor.JarImpler;
 import net.java.quickcheck.collection.Pair;
@@ -29,7 +30,7 @@ import java.util.stream.Stream;
 /**
  * Created by aleksandr on 07.12.16.
  */
-public class Implementor implements JarImpler {
+public class Implementor implements JarImpler,Impler {
 
     private final Map<String, String> args;
 
@@ -282,7 +283,7 @@ public class Implementor implements JarImpler {
 
         @Override
         public String get() {
-            return "variable" + counter;
+            return "variable" + counter++;
         }
     };
 
@@ -334,12 +335,18 @@ public class Implementor implements JarImpler {
         private Pair<String, Set<String>> getThrownExceptions(Constructor<?> constructor) {
             final StringBuilder sb = new StringBuilder();
             final Set<String> imports = new HashSet<>(constructor.getExceptionTypes().length);
+            Integer len = constructor.getParameterTypes().length;
+            Integer i = 0;
             for (Class<?> exception : constructor.getExceptionTypes()) {
-                sb.append(exception.getSimpleName()).append(',');
+                sb.append(exception.getSimpleName());
+                if (i<len-1){
+                    sb.append(',');
+                }
                 final Optional<String> importStringOptional = getImportForReferenceType(exception);
                 if (importStringOptional.isPresent()) {
                     imports.add(importStringOptional.get());
                 }
+                i++;
             }
             return constructor.getExceptionTypes().length == 0
                     ? new Pair<>("", Collections.emptySet())
@@ -347,13 +354,13 @@ public class Implementor implements JarImpler {
 
         }
 
-        private Collection<Constructor<?>> checkConstructors(final Class<?> token) throws ImplerException {
-            final Collection<Constructor<?>> result = Stream.of(token.getDeclaredConstructors())
+        private Collection<Constructor<?>> checkConstructors(final Class<?> aClass) throws ImplerException {
+            final Collection<Constructor<?>> result = Stream.of(aClass.getDeclaredConstructors())
                     .filter(constructor -> {
                         final int modifiers = constructor.getModifiers();
                         return Modifier.isPublic(modifiers) || Modifier.isProtected(modifiers);
                     }).collect(Collectors.toList());
-            if (result.isEmpty() && !token.isInterface()) {
+            if (result.isEmpty() && !aClass.isInterface()) {
                 throw new ImplerException("Can't extend class without public / protected constructor!");
             } else {
                 return result;
@@ -364,18 +371,22 @@ public class Implementor implements JarImpler {
             final StringBuilder sb = new StringBuilder();
             final Set<String> imports = new HashSet<>(constructor.getParameterCount());
             final List<String> parameters = new ArrayList<String>(constructor.getParameterCount());
+            Integer len = constructor.getParameterTypes().length;
+            Integer i = 0;
             for (Class<?> parameter : constructor.getParameterTypes()) {
                 final String parameterName = variableGenerator.get();
                 sb.append(parameter.getSimpleName())
                         .append(' ')
-                        .append(parameterName)
-                        .append(',');
-                if
+                        .append(parameterName);
+                if (i < len -1){
+                    sb.append(',');
+                }
                 parameters.add(parameterName);
                 final Optional<String> importStringOptional = getImportForReferenceType(parameter);
                 if (importStringOptional.isPresent()) {
                     imports.add(importStringOptional.get());
                 }
+                i++;
             }
             return new Triple<String, Set<String>, List<String>>(sb.toString(), imports, parameters);
         }
@@ -387,8 +398,8 @@ public class Implementor implements JarImpler {
         }
     }
 
-    private Optional<String> getImportForReferenceType(final Class<?> token) {
-        Class<?> current = token;
+    private Optional<String> getImportForReferenceType(final Class<?> aClass) {
+        Class<?> current = aClass;
         while (current.isArray()) {
             current = current.getComponentType();
         }
@@ -397,7 +408,7 @@ public class Implementor implements JarImpler {
                 : Optional.of(current.getCanonicalName());
     }
 
-    private static String getSuperCall(final Collection<String> parameters) {
+    private String getSuperCall(final Collection<String> parameters) {
         final Optional<String> optionalResult = parameters.stream()
                 .map(parameter -> parameter + ',')
                 .reduce((s, s2) -> s + s2);
@@ -450,20 +461,19 @@ public class Implementor implements JarImpler {
     public Implementor() {
         String[] args = new String[]{};
         OptionResolver resolver = (new OptionResolver())
-                .addArg("classname", "java.util.Map");
+                .addArg("classname", "javax.sql.rowset.CachedRowSet");
         this.args = resolver.resolveArg(args);
     }
 
     public Implementor(String[] args) {
         OptionResolver resolver = (new OptionResolver())
-                .addArg("classname", "java.util.Map");
+                .addArg("classname", "javax.sql.rowset.CachedRowSet");
         this.args = resolver.resolveArg(args);
     }
 
     public static void main(String[] args) throws ClassNotFoundException, ImplerException {
-
         Implementor imp = new Implementor(args);
-        Path p = FileSystems.getDefault().getPath("/home/aleksandr/IdeaProjects/JavaPractice_ITMO/out/");
+        Path p = FileSystems.getDefault().getPath("C:\\Users\\aleksandr\\IdeaProjects\\JavaPractice_ITMO\\practice\\out");
         imp.implement(Class.forName(imp.args.get("classname")), p);
     }
 
@@ -486,15 +496,18 @@ public class Implementor implements JarImpler {
 
             final Pair<String, Set<String>> methodsStringWithImports = generateMethods(methods);
             sb.append(methodsStringWithImports.getFirst());
+            set.addAll(methodsStringWithImports.getSecond());
             return new Pair<>(sb.toString(), set);
         }
 
-        private Set<Method> getOverriddableMethods(final Class<?> token) {
-            return Stream.of(token.getDeclaredMethods(), token.getMethods())
+        private Set<Method> getOverriddableMethods(final Class<?> aClass) {
+            return Stream.of(aClass.getDeclaredMethods(), aClass.getMethods())
                     .flatMap(Arrays::stream)
                     .filter(m -> Modifier.isAbstract(m.getModifiers()))
                     .collect(Collectors.toSet());
         }
+
+
 
         private Pair<String, Set<String>> generateMethods(final Iterable<Method> methods) {
             final StringBuilder sb = new StringBuilder(1024);
@@ -502,14 +515,13 @@ public class Implementor implements JarImpler {
             for (Method method : methods) {
                 final Pair<String, Set<String>> parametersWithImports = generateParameters(method);
                 sb.append("    @Override").append(System.lineSeparator());
-                sb.append(String.format("    %1s%2s %3s(%4s %5s) {",
+                sb.append(String.format("    %1s%2s %3s(%4s ) {",
                         patterns.get("remove_modifiers")
                                 .matcher(Modifier.toString(method.getModifiers()))
                                 .replaceAll(Matcher.quoteReplacement("")),
                         method.getReturnType().getSimpleName(),
                         method.getName(),
-                        parametersWithImports.getFirst(),
-                        ""))
+                        parametersWithImports.getFirst()))
                         .append(System.lineSeparator());
 
                 sb.append(String.format("        return %1s;", getDefaultValue(method.getReturnType()))).append(System.lineSeparator());
@@ -523,21 +535,29 @@ public class Implementor implements JarImpler {
             return new Pair<>(sb.toString(), set);
         }
 
-        private String getDefaultValue(final Class<?> token) {
-            return valuesMapper.containsKey(token)
-                    ? valuesMapper.get(token)
-                    : ' ' + Objects.toString(Array.get(Array.newInstance(token, 1), 0));
+        private String getDefaultValue(final Class<?> aClass) {
+            return valuesMapper.containsKey(aClass)
+                    ? valuesMapper.get(aClass)
+                    : ' ' + Objects.toString(Array.get(Array.newInstance(aClass, 1), 0));
         }
 
         private Pair<String, Set<String>> generateParameters(final Method method) {
             final StringBuilder sb = new StringBuilder();
             final Set<String> imports = new HashSet<>();
+            Integer len = method.getParameterTypes().length;
+            Integer i = 0;
             for (Class<?> parameter : method.getParameterTypes()) {
-                sb.append(parameter.getSimpleName()).append(' ').append(variableGenerator.get()).append(',');
+                sb.append(parameter.getSimpleName())
+                        .append(' ')
+                        .append(variableGenerator.get());
+                if (i < len -1){
+                    sb.append(',');
+                }
                 final Optional<String> importStringOptional = getImportForReferenceType(parameter);
                 if (importStringOptional.isPresent()) {
                     imports.add(importStringOptional.get());
                 }
+                i++;
             }
             return new Pair<>(sb.toString(), imports);
         }
