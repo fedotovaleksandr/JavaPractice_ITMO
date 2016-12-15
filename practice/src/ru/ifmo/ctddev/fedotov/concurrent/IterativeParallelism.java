@@ -14,7 +14,7 @@ import java.util.function.UnaryOperator;
 public class IterativeParallelism implements ScalarIP {
     @Override
     public <T> T maximum(int i, List<? extends T> list, Comparator<? super T> comparator) throws InterruptedException {
-        final InterfaceMonoid<T> monoid = new Monoid<T>((a, b) -> comparator.compare(a, b) > 0 ? a : b, () -> list.get(0));
+        final InterfaceMonoid<T> monoid = new Monoid<T>((a, b) -> comparator.compare(a, b) >= 0 ? a : b, () -> list.get(0));
         int chunkSize = list.size() / i;
         Combinator<T,T> combinator = new Combinator<>((List<T>) list, chunkSize, monoid,UnaryOperator.identity());
 
@@ -23,7 +23,7 @@ public class IterativeParallelism implements ScalarIP {
 
     @Override
     public <T> T minimum(int i, List<? extends T> list, Comparator<? super T> comparator) throws InterruptedException {
-        final InterfaceMonoid<T> monoid = new Monoid<T>((a, b) -> comparator.compare(a, b) > 0 ? a : b, () -> list.get(0));
+        final InterfaceMonoid<T> monoid = new Monoid<T>((a, b) -> comparator.compare(a, b) <= 0 ? a : b, () -> list.get(0));
         int chunkSize = list.size() / i;
         Combinator<T,T> combinator = new Combinator<>((List<T>) list, chunkSize, monoid, UnaryOperator.identity());
 
