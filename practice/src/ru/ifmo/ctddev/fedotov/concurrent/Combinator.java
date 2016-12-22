@@ -1,5 +1,7 @@
 package ru.ifmo.ctddev.fedotov.concurrent;
 
+import ru.ifmo.ctddev.fedotov.mapper.ParallelMapperImpl;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
@@ -19,6 +21,9 @@ public class Combinator<T, E> {
         this.chunkSize = chunkSize > 0 ? chunkSize : 1;
         this.monoid = monoid;
         this.functor = functor;
+    }
+
+    public Combinator(List<T> elements, InterfaceMonoid<E> monoid, Function<T, E> functor, ParallelMapperImpl mapper) {
     }
 
     public E process() {
