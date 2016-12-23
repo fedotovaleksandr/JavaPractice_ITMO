@@ -8,7 +8,6 @@ import java.util.Queue;
 public class FutureRunnable implements Runnable {
 
 
-
     private Queue<FutureTask> tasks;
     private final Object monitor;
 
@@ -20,18 +19,19 @@ public class FutureRunnable implements Runnable {
     @Override
     public void run() {
 
-        while (true) {
-            FutureTask task = this.getTask();
-            if (task == null) {
-                try {
-                    synchronized (monitor){
-                        this.monitor.wait(1);
+        while (!Thread.currentThread().isInterrupted()) {
+            try {
+                FutureTask task = this.getTask();
+                if (task == null) {
+                    synchronized (monitor) {
+                        this.monitor.wait();
                     }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                } else {
+                    task.doWork();
                 }
-            } else {
-                task.doWork();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt(); // propagate interrupt
+                break;
             }
         }
 
