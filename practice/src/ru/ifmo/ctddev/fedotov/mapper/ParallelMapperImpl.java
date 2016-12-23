@@ -14,34 +14,38 @@ public class ParallelMapperImpl implements ParallelMapper {
 
     private ThreadPoolExecutor threadPoolExecutor;
 
-    public ParallelMapperImpl(int threads) {
+    public  ParallelMapperImpl(int threads) {
         this.threadPoolExecutor = new ThreadPoolExecutor(threads);
-
     }
 
     @Override
     public <T, R> List<R> map(Function<? super T, ? extends R> function, List<? extends T> list) throws InterruptedException {
-        final Collection<FutureTask<R, T>> futureTasks = this.threadPoolExecutor.createTasks(function, list);
-        this.threadPoolExecutor.continueProcess();
+        try {
+            final Collection<FutureTask<R, T>> futureTasks = this.threadPoolExecutor.createTasks(function, list);
+            this.threadPoolExecutor.continueProcess();
 
-        while (!this.threadPoolExecutor.isComplete()) {
-            //wait
-            boolean tasksComlete = true;
-            for (FutureTask task : futureTasks
+            while (!this.threadPoolExecutor.isComplete()) {
+                //wait
+                boolean tasksComlete = true;
+                for (FutureTask task : futureTasks
+                        ) {
+                    tasksComlete &= task.getStatus() == FutureTask.Status.COMPLETE;
+
+                }
+                if (tasksComlete) {
+                    break;
+                }
+            }
+            final List<R> result = new ArrayList<>();
+            for (FutureTask<R, T> task : futureTasks
                     ) {
-                tasksComlete &= task.getStatus() == FutureTask.Status.COMPLETE;
-
+                result.add(task.getResult());
             }
-            if (tasksComlete) {
-                break;
-            }
+            return result;
+        } catch (ArrayIndexOutOfBoundsException e){
+            e.printStackTrace();
+            throw e;
         }
-        final List<R> result = new ArrayList<>();
-        for (FutureTask<R, T> task : futureTasks
-                ) {
-            result.add(task.getResult());
-        }
-        return result;
     }
 
     @Override
@@ -50,10 +54,10 @@ public class ParallelMapperImpl implements ParallelMapper {
     }
 
     public static void main(String[] args) throws InterruptedException {
-        ParallelMapperImpl pm = new ParallelMapperImpl(2);
+        ParallelMapperImpl pm = new ParallelMapperImpl(4);
         IterativeParallelism it = new IterativeParallelism(pm);
 
-        Integer result = it.<Integer>maximum(3,pm.randomList(100), Comparator.<Integer>comparingInt(v -> v / 100));
+        Integer result = it.<Integer>maximum(4,pm.randomList(10_000), Comparator.<Integer>comparingInt(v -> v / 100));
         System.out.print(result);
         pm.close();
 
