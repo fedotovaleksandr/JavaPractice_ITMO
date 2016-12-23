@@ -7,10 +7,10 @@ import java.util.function.Function;
  * Created by aleksandr on 22.12.16.
  */
 public class ThreadPoolExecutor {
-    private Queue<FutureTask> tasks = new ArrayDeque<>(2048);
+    private volatile Queue<FutureTask> tasks = new ArrayDeque<>();
     private final int threadsCount;
     private List<Thread> threads = new ArrayList<>();
-    final Object monitor = new Object();
+    final  Object monitor = new Object();
 
     public ThreadPoolExecutor(final int threads) {
         this.threadsCount = threads;
@@ -25,7 +25,7 @@ public class ThreadPoolExecutor {
         for (T item : list) {
             futureTasks.add(this.createTask(function, item));
         }
-        return null;
+        return futureTasks;
     }
 
     private <T, R> FutureTask createTask(Function<? super T, ? extends R> function, T item) {
@@ -48,15 +48,31 @@ public class ThreadPoolExecutor {
     }
 
     void continueProcess() {
-        this.monitor.notifyAll();
+        this.wakeThreads();
+        synchronized (this.monitor){
+            this.monitor.notifyAll();
+        }
+    }
+    private void wakeThreads(){
+        for (Thread th:this.threads){
+            if (th.getState() == Thread.State.NEW){
+                th.start();
+            }
+        }
     }
 
     public boolean isComplete() {
         boolean answer = true;
-        if (this.tasks.size() != 0){
-            return false;
-        }
-        for (Thread th : this.threads) {
+
+        for (int i = 0 ;i< this.threads.size();i++) {
+            Thread th = this.threads.get(i);
+            Thread.State threadState = th.getState();
+            if (threadState == Thread.State.TERMINATED){
+                th.interrupt();
+                Thread newthread = new Thread(new FutureRunnable(this.tasks, monitor), "Thread" + i);
+                this.threads.set(i,newthread);
+                newthread.start();
+            }
             answer &= th.getState() == Thread.State.WAITING;
         }
         return answer;

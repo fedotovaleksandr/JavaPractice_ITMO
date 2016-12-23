@@ -1,5 +1,6 @@
 package ru.ifmo.ctddev.fedotov.mapper;
 
+import javax.lang.model.type.UnionType;
 import java.util.function.Function;
 
 /**
@@ -20,7 +21,7 @@ public class FutureTask<R, T> {
         this.item = item;
     }
 
-    public void doWork() {
+    void doWork() {
         if (!canceled) {
             this.setStatus(Status.RUNNING);
             this.result = this.function.apply(this.item);
@@ -39,20 +40,20 @@ public class FutureTask<R, T> {
         return result;
     }
 
-    private int status = Status.WAIT;
+    private Status status = Status.WAIT;
 
-    public int getStatus() {
+    public Status getStatus() {
         return status;
     }
 
-    private synchronized void setStatus(int status){
-
+    private synchronized void setStatus(Status status){
+        this.status = status;
     }
 
-    static class Status {
-        static final int COMPLETE = 1;
-        static final int WAIT = 2;
-        static final int RUNNING = 3;
+    static enum Status {
+        COMPLETE ,
+        WAIT ,
+         RUNNING ,
 
     }
 }

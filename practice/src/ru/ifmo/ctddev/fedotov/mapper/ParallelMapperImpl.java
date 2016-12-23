@@ -1,11 +1,11 @@
 package ru.ifmo.ctddev.fedotov.mapper;
 
 import info.kgeorgiy.java.advanced.mapper.ParallelMapper;
+import ru.ifmo.ctddev.fedotov.concurrent.IterativeParallelism;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by aleksandr on 22.12.16.
@@ -49,5 +49,23 @@ public class ParallelMapperImpl implements ParallelMapper {
         this.threadPoolExecutor.shutdown();
     }
 
+    public static void main(String[] args) throws InterruptedException {
+        ParallelMapperImpl pm = new ParallelMapperImpl(2);
+        IterativeParallelism it = new IterativeParallelism(pm);
 
+        Integer result = it.<Integer>maximum(3,pm.randomList(100), Comparator.<Integer>comparingInt(v -> v / 100));
+        System.out.print(result);
+        pm.close();
+
+    }
+
+    private final Random random = new Random(3257083275083275083L);
+    protected  List<Integer> randomList(final int size) {
+        final List<Integer> pool = random.ints(Math.min(size, 1000_000)).boxed().collect(Collectors.toList());
+        final List<Integer> result = new ArrayList<>();
+        for (int i = 0; i < size; i++) {
+            result.add(pool.get(random.nextInt(pool.size())));
+        }
+        return result;
+    }
 }

@@ -20,16 +20,19 @@ public class FutureRunnable implements Runnable {
     @Override
     public void run() {
 
-        FutureTask task = this.getTask();
-        if (task == null) {
-            try {
-                this.monitor.wait();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+        while (true) {
+            FutureTask task = this.getTask();
+            if (task == null) {
+                try {
+                    synchronized (monitor){
+                        this.monitor.wait(1);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            } else {
+                task.doWork();
             }
-        } else {
-            task.doWork();
-            this.run();
         }
 
     }
