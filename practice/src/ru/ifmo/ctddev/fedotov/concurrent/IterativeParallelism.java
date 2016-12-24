@@ -1,6 +1,7 @@
 package ru.ifmo.ctddev.fedotov.concurrent;
 
 import info.kgeorgiy.java.advanced.concurrent.ScalarIP;
+import info.kgeorgiy.java.advanced.mapper.ParallelMapper;
 import ru.ifmo.ctddev.fedotov.mapper.ParallelMapperImpl;
 
 import java.util.Comparator;
@@ -13,9 +14,9 @@ import java.util.function.UnaryOperator;
  * Created by aleksandr on 14.12.16.
  */
 public class IterativeParallelism implements ScalarIP {
-    private ParallelMapperImpl mapper = null;
+    private ParallelMapper mapper = null;
 
-    public IterativeParallelism(ParallelMapperImpl mapper) {
+    public IterativeParallelism(ParallelMapper mapper) {
         this.mapper = mapper;
     }
 

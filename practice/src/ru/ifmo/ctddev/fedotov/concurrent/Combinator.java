@@ -1,5 +1,6 @@
 package ru.ifmo.ctddev.fedotov.concurrent;
 
+import info.kgeorgiy.java.advanced.mapper.ParallelMapper;
 import ru.ifmo.ctddev.fedotov.mapper.ParallelMapperImpl;
 
 import java.util.ArrayList;
@@ -11,7 +12,7 @@ import java.util.function.UnaryOperator;
  * Created by aleksandr on 15.12.16.
  */
 public class Combinator<T, R> {
-    private ParallelMapperImpl mapper = null;
+    private ParallelMapper mapper = null;
     private List<T> elements;
     private int chunkSize;
     private InterfaceMonoid<R> monoid;
@@ -24,7 +25,7 @@ public class Combinator<T, R> {
         this.functor = functor;
     }
 
-    public Combinator(List<T> elements,int chunkSize, InterfaceMonoid<R> monoid, Function<T, R> functor, ParallelMapperImpl mapper) {
+    public Combinator(List<T> elements,int chunkSize, InterfaceMonoid<R> monoid, Function<T, R> functor, ParallelMapper mapper) {
         this.elements = elements;
         this.chunkSize = chunkSize;
         this.monoid = monoid;
