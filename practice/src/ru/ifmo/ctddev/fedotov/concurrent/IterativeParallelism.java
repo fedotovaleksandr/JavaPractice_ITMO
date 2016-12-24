@@ -57,7 +57,7 @@ public class IterativeParallelism implements ScalarIP {
         if (this.mapper == null) {
             return new Combinator<>((List<T>) elements, chunkSize, monoid, functor);
         } else {
-            return new Combinator<T, R>((List<T>) elements,chunkSize, monoid, functor, this.mapper);
+            return new Combinator<T, R>((List<T>) elements, chunkSize, monoid, functor, this.mapper);
         }
     }
 }

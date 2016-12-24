@@ -1,0 +1,1 @@
+"C:\Program Files\Java\jdk1.8.0_40\bin\java.exe" -Dfile.encoding=UTF8 -cp artifacts/*;lib/*;out info.kgeorgiy.java.advanced.mapper.Tester scalar ru.ifmo.ctddev.fedotov.mapper.ParallelMapperImpl,ru.ifmo.ctddev.fedotov.concurrent.IterativeParallelism

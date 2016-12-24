@@ -28,6 +28,7 @@
         <JAVADOC />
         <SOURCES>
           <root url="file://$MODULE_DIR$/lib" />
+          <root url="file://$MODULE_DIR$/tests" />
         </SOURCES>
         <jarDirectory url="file://$MODULE_DIR$/lib" recursive="false" />
         <jarDirectory url="file://$MODULE_DIR$/lib" recursive="false" type="SOURCES" />
