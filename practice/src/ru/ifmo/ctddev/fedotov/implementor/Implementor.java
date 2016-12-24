@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 /**
  * Created by aleksandr on 07.12.16.
  */
-public class Implementor implements JarImpler,Impler {
+public class Implementor implements JarImpler, Impler {
 
     private final Map<String, String> args;
 
@@ -132,27 +132,67 @@ public class Implementor implements JarImpler,Impler {
         return classPath.toFile();
     }
 
+    /**
+     * Class for Node generation etc. imports,class,constructors,function
+     */
     interface ClassNodeInterface {
+        /**
+         * Method for return String build Section ans Imports Set
+         *
+         * @return Pair
+         * @throws ImplerException exception impler
+         */
         public Pair<String, Set<String>> build() throws ImplerException;
 
+        /**
+         * Add subNode
+         *
+         * @param classNode ClassNodeInterface
+         * @return ClassNodeInterface
+         */
         public ClassNodeInterface addNode(ClassNodeInterface classNode);
 
     }
 
+    /**
+     * Abstract Node for combinate another nodes
+     */
     abstract class AbstractClassNode implements ClassNodeInterface {
-        //
-        protected ArrayList<ClassNodeInterface> nodes = new ArrayList<>();
+        /**
+         * Array list of sub NOdes
+         */
+        ArrayList<ClassNodeInterface> nodes = new ArrayList<>();
 
+        /**
+         * @param classNode ClassNodeInterface
+         * @return ClassNodeInterface
+         * 
+         */
         @Override
         public ClassNodeInterface addNode(ClassNodeInterface classNode) {
             nodes.add(classNode);
             return this;
         }
 
+        /**
+         * Return section before  concat node
+         *
+         * @return String
+         */
         protected abstract String getStartSource();
 
+        /**
+         * Get section after concat node
+         *
+         * @return String
+         */
         protected abstract String getEndSource();
 
+        /**
+         * @return Pair
+         * @throws ImplerException exception impler
+         * 
+         */
         @Override
         public Pair<String, Set<String>> build() throws ImplerException {
             StringBuilder sb = new StringBuilder();
@@ -171,23 +211,46 @@ public class Implementor implements JarImpler,Impler {
 
     }
 
+    /**
+     * Point to start add nodes
+     */
     class MainNode implements ClassNodeInterface {
-
+        /**
+         * Class for analyze
+         *
+         */
         private final Class<?> aClass;
-        //
-        protected ArrayList<ClassNodeInterface> nodes = new ArrayList<>();
+        /**
+         * araay of nodes
+         */
+        ArrayList<ClassNodeInterface> nodes = new ArrayList<>();
 
-        public MainNode(Class<?> aClass) {
+        /**
+         * Constructor
+         *
+         * @param aClass analyze class
+         */
+        MainNode(Class<?> aClass) {
 
             this.aClass = aClass;
         }
 
+        /**
+         * @param classNode ClassNodeInterface
+         * @return ClassNodeInterface
+         * 
+         */
         @Override
         public ClassNodeInterface addNode(ClassNodeInterface classNode) {
             nodes.add(classNode);
             return this;
         }
 
+        /**
+         * @return Pair
+         * @throws ImplerException exception impler
+         * 
+         */
         @Override
         public Pair<String, Set<String>> build() throws ImplerException {
             StringBuilder sb = new StringBuilder();
@@ -215,25 +278,49 @@ public class Implementor implements JarImpler,Impler {
             return new Pair<>(sb.toString(), set);
         }
 
+        /**
+         * Imports node it must be generate late
+         *
+         */
         Optional<ClassNodeImports> importNode;
 
+        /**
+         * set inport node
+         *
+         * @param cni ClassNodeImports
+         * @return MainNode
+         */
         public MainNode setImports(ClassNodeImports cni) {
             importNode = Optional.of(cni);
             return this;
         }
     }
 
+    /**
+     * Impotr node
+     */
     class ClassNodeImports implements ClassNodeInterface {
+        /**
+         * Imports
+         *
+         */
         private Set<String> imports;
 
-        public ClassNodeImports() {
-        }
-
-        public ClassNodeImports setImports(Set<String> imports) {
+        /**
+         * add imports
+         *
+         * @param imports Set
+         * @return ClassNodeImports
+         */
+        ClassNodeImports setImports(Set<String> imports) {
             this.imports = imports;
             return this;
         }
 
+        /**
+         * @return Pair
+         * 
+         */
         @Override
         public Pair<String, Set<String>> build() {
             StringBuilder sb = new StringBuilder();
@@ -248,20 +335,39 @@ public class Implementor implements JarImpler,Impler {
             return new Pair<String, Set<String>>(sb.toString(), set);
         }
 
+        /**
+         * @param classNode ClassNodeInterface
+         * @return ClassNodeInterface
+         * 
+         */
         @Override
         public ClassNodeInterface addNode(ClassNodeInterface classNode) {
             return this;
         }
     }
 
+    /**
+     * Class node
+     */
     class ClassNode extends AbstractClassNode {
-
+        /**
+         * 
+         */
         private final Class<?> aClass;
 
-        public ClassNode(Class<?> aClass) {
+        /**
+         * Constructro
+         *
+         * @param aClass Class
+         */
+        ClassNode(Class<?> aClass) {
             this.aClass = aClass;
         }
 
+        /**
+         * @return String
+         * 
+         */
         @Override
         protected String getStartSource() {
             return String.format("public class %1s %2s %3s {",
@@ -271,6 +377,10 @@ public class Implementor implements JarImpler,Impler {
                     System.lineSeparator();
         }
 
+        /**
+         * @return String
+         * 
+         */
         @Override
         protected String getEndSource() {
             return "}";
@@ -278,6 +388,10 @@ public class Implementor implements JarImpler,Impler {
 
     }
 
+    /**
+     * Generator for input variable
+     *
+     */
     private Supplier<String> variableGenerator = new Supplier<String>() {
         Integer counter = 0;
 
@@ -287,6 +401,10 @@ public class Implementor implements JarImpler,Impler {
         }
     };
 
+    /**
+     * Default value Mapper
+     *
+     */
     private Map<Class<?>, String> valuesMapper = new HashMap<Class<?>, String>() {{
         put(Void.class, "");
         put(void.class, "");
@@ -296,15 +414,30 @@ public class Implementor implements JarImpler,Impler {
 
     }};
 
+    /**
+     * Node Constructor
+     *
+     */
     class ClassNodeConstructors implements ClassNodeInterface {
-
+        /**
+         * Class for analyze
+         */
         private final Class<?> aClass;
 
-        public ClassNodeConstructors(Class<?> aClass) {
+        /**
+         * Consturctor
+         *
+         * @param aClass Class
+         */
+        ClassNodeConstructors(Class<?> aClass) {
             this.aClass = aClass;
         }
 
-
+        /**
+         * @return Pair
+         * @throws ImplerException exception impler
+         * 
+         */
         @Override
         public Pair<String, Set<String>> build() throws ImplerException {
             StringBuilder sb = new StringBuilder();
@@ -331,7 +464,12 @@ public class Implementor implements JarImpler,Impler {
             return new Pair<>(sb.toString(), set);
         }
 
-
+        /**
+         * Get exceptions
+         *
+         * @param constructor Constructor
+         * @return Pair
+         */
         private Pair<String, Set<String>> getThrownExceptions(Constructor<?> constructor) {
             final StringBuilder sb = new StringBuilder();
             final Set<String> imports = new HashSet<>(constructor.getExceptionTypes().length);
@@ -339,7 +477,7 @@ public class Implementor implements JarImpler,Impler {
             Integer i = 0;
             for (Class<?> exception : constructor.getExceptionTypes()) {
                 sb.append(exception.getSimpleName());
-                if (i<len-1){
+                if (i < len - 1) {
                     sb.append(',');
                 }
                 final Optional<String> importStringOptional = getImportForReferenceType(exception);
@@ -354,6 +492,15 @@ public class Implementor implements JarImpler,Impler {
 
         }
 
+
+
+        /**
+         * Check constructor public or private exist
+         *
+         * @param aClass Class
+         * @return Collection
+         * @throws ImplerException exception
+         */
         private Collection<Constructor<?>> checkConstructors(final Class<?> aClass) throws ImplerException {
             final Collection<Constructor<?>> result = Stream.of(aClass.getDeclaredConstructors())
                     .filter(constructor -> {
@@ -367,6 +514,12 @@ public class Implementor implements JarImpler,Impler {
             }
         }
 
+        /**
+         * Generate input parameters
+         *
+         * @param constructor Constructor
+         * @return Triple
+         */
         private Triple<String, Set<String>, List<String>> generateParameters(final Constructor<?> constructor) {
             final StringBuilder sb = new StringBuilder();
             final Set<String> imports = new HashSet<>(constructor.getParameterCount());
@@ -378,7 +531,7 @@ public class Implementor implements JarImpler,Impler {
                 sb.append(parameter.getSimpleName())
                         .append(' ')
                         .append(parameterName);
-                if (i < len -1){
+                if (i < len - 1) {
                     sb.append(',');
                 }
                 parameters.add(parameterName);
@@ -391,13 +544,23 @@ public class Implementor implements JarImpler,Impler {
             return new Triple<String, Set<String>, List<String>>(sb.toString(), imports, parameters);
         }
 
-
+        /**
+         * @param classNode ClassNodeInterface
+         * @return ClassNodeInterface
+         * 
+         */
         @Override
         public final ClassNodeInterface addNode(ClassNodeInterface classNode) {
             return this;
         }
     }
 
+    /**
+     * Find imports
+     *
+     * @param aClass Class
+     * @return Optional
+     */
     private Optional<String> getImportForReferenceType(final Class<?> aClass) {
         Class<?> current = aClass;
         while (current.isArray()) {
@@ -408,6 +571,12 @@ public class Implementor implements JarImpler,Impler {
                 : Optional.of(current.getCanonicalName());
     }
 
+    /**
+     * Create super call for method
+     *
+     * @param parameters Collection
+     * @return String
+     */
     private String getSuperCall(final Collection<String> parameters) {
         final Optional<String> optionalResult = parameters.stream()
                 .map(parameter -> parameter + ',')
@@ -420,16 +589,34 @@ public class Implementor implements JarImpler,Impler {
         }
     }
 
+    /**
+     * Option resolver
+     */
     class OptionResolver {
-
+        /**
+         * Input arguments
+         */
         ArrayList<Pair<String, String>> args;
+        /**
+         * arg length
+         */
         Integer argcLength = 0;
 
+        /**
+         * constructor
+         */
         OptionResolver() {
             this.args = new ArrayList<>();
         }
 
-        public OptionResolver addArg(String aliasName, String defaultValue) {
+        /**
+         * add  arg by alias and default value
+         *
+         * @param aliasName    String
+         * @param defaultValue String
+         * @return OptionResolver
+         */
+        OptionResolver addArg(String aliasName, String defaultValue) {
 
             Pair<String, String> nPair = new Pair<>(aliasName, defaultValue);
             args.add(argcLength, nPair);
@@ -438,6 +625,12 @@ public class Implementor implements JarImpler,Impler {
 
         }
 
+        /**
+         * Resolve argumntss return resolve map arg = value
+         *
+         * @param arguments String[]
+         * @return Map
+         */
         final Map<String, String> resolveArg(String[] arguments) {
             if (arguments.length > argcLength) {
                 throw new IllegalArgumentException("Bad Arguments");
@@ -458,6 +651,9 @@ public class Implementor implements JarImpler,Impler {
         }
     }
 
+    /**
+     * Constructor of base class
+     */
     public Implementor() {
         String[] args = new String[]{};
         OptionResolver resolver = (new OptionResolver())
@@ -465,29 +661,53 @@ public class Implementor implements JarImpler,Impler {
         this.args = resolver.resolveArg(args);
     }
 
+    /**
+     * Construtor for input args
+     *
+     * @param args  String
+     */
     public Implementor(String[] args) {
         OptionResolver resolver = (new OptionResolver())
-                .addArg("classname", "javax.sql.rowset.CachedRowSet");
+                .addArg("classname", "ru.ifmo.ctddev.fedotov.implementor.Test");
         this.args = resolver.resolveArg(args);
     }
 
+    /**
+     * Start point of class
+     *
+     * @param args String[]
+     * @throws ClassNotFoundException not found class for impler
+     * @throws ImplerException exception impler
+     */
     public static void main(String[] args) throws ClassNotFoundException, ImplerException {
         Implementor imp = new Implementor(args);
         Path p = FileSystems.getDefault().getPath("C:\\Users\\aleksandr\\IdeaProjects\\JavaPractice_ITMO\\practice\\out");
         imp.implement(Class.forName(imp.args.get("classname")), p);
     }
 
-    private void process() {
-    }
-
+    /**
+     * Class for function section
+     */
     public class ClassNodeFunctions implements ClassNodeInterface {
-
+        /**
+         * Analyze class
+         */
         private final Class<?> aClass;
 
-        public ClassNodeFunctions(Class<?> aClass) {
+        /**
+         * constructor
+         *
+         * @param aClass Class
+         */
+        ClassNodeFunctions(Class<?> aClass) {
             this.aClass = aClass;
         }
 
+        /**
+         * @return Pair
+         * @throws ImplerException exception impler
+         * 
+         */
         @Override
         public Pair<String, Set<String>> build() throws ImplerException {
             StringBuilder sb = new StringBuilder();
@@ -500,6 +720,11 @@ public class Implementor implements JarImpler,Impler {
             return new Pair<>(sb.toString(), set);
         }
 
+        /**
+         * Get set of overriddable methods of class
+         * @param aClass Class
+         * @return Set
+         */
         private Set<Method> getOverriddableMethods(final Class<?> aClass) {
             return Stream.of(aClass.getDeclaredMethods(), aClass.getMethods())
                     .flatMap(Arrays::stream)
@@ -507,8 +732,11 @@ public class Implementor implements JarImpler,Impler {
                     .collect(Collectors.toSet());
         }
 
-
-
+        /**
+         * Return method code and Imports
+         * @param methods Iterable
+         * @return Pair
+         */
         private Pair<String, Set<String>> generateMethods(final Iterable<Method> methods) {
             final StringBuilder sb = new StringBuilder(1024);
             final Set<String> set = new HashSet<>(1024, 1.0f);
@@ -535,12 +763,23 @@ public class Implementor implements JarImpler,Impler {
             return new Pair<>(sb.toString(), set);
         }
 
+        /**
+         * Default value by type
+         * @param aClass Class
+         * @return String
+         */
         private String getDefaultValue(final Class<?> aClass) {
             return valuesMapper.containsKey(aClass)
                     ? valuesMapper.get(aClass)
                     : ' ' + Objects.toString(Array.get(Array.newInstance(aClass, 1), 0));
         }
 
+        /**
+         * Genrate input parametrs
+         *
+         * @param method Method
+         * @return Pair
+         */
         private Pair<String, Set<String>> generateParameters(final Method method) {
             final StringBuilder sb = new StringBuilder();
             final Set<String> imports = new HashSet<>();
@@ -550,7 +789,7 @@ public class Implementor implements JarImpler,Impler {
                 sb.append(parameter.getSimpleName())
                         .append(' ')
                         .append(variableGenerator.get());
-                if (i < len -1){
+                if (i < len - 1) {
                     sb.append(',');
                 }
                 final Optional<String> importStringOptional = getImportForReferenceType(parameter);
@@ -562,7 +801,11 @@ public class Implementor implements JarImpler,Impler {
             return new Pair<>(sb.toString(), imports);
         }
 
-
+        /**
+         * 
+         * @param classNode ClassNodeInterface
+         * @return ClassNodeInterface
+         */
         @Override
         public ClassNodeInterface addNode(ClassNodeInterface classNode) {
             return null;
