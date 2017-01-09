@@ -1,6 +1,6 @@
 <component name="ArtifactManager">
   <artifact type="jar" name="crawler">
-    <output-path>$PROJECT_DIR$/out/artifacts/crawler</output-path>
+    <output-path>$PROJECT_DIR$/practice/out/artifacts/crawler</output-path>
     <root id="archive" name="practice.jar">
       <element id="directory" name="META-INF">
         <element id="file-copy" path="$PROJECT_DIR$/practice/src/crawler/META-INF/MANIFEST.MF" />

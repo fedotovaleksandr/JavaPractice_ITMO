@@ -19,8 +19,6 @@ public class WebCrawler implements Crawler {
     private final ExecutorService extractThreadPool;
     private final ExecutorService downloadThreadPool;
     private final Collection<String> downloadedUrlHashSet = ConcurrentHashMap.newKeySet();
-    private final ConcurrentHashMap<String, Integer> perHostDownloadsCount = new ConcurrentHashMap<>();
-    private final Map<String, BlockingQueue<DownloadCallable>> downloadLeft = new ConcurrentHashMap<>();
     private final BlockingQueue<Pair<Future<String>, String>> processingQueue = new LinkedBlockingQueue<>();
     private final int perHost;
 
@@ -79,40 +77,32 @@ public class WebCrawler implements Crawler {
 
 
     private Result process(final String url, final int depth) throws InterruptedException {
-        try {
-            perHostDownloadsCount.put(getHost(url), 1);
-            processingQueue.add(
-                    new Pair<Future<String>, String>(
-                            downloadThreadPool.submit(new DownloadCallable(url, 1, depth)),
-                            url)
-            );
+        processingQueue.add(
+                new Pair<Future<String>, String>(
+                        downloadThreadPool.submit(new DownloadCallable(url, 1, depth)),
+                        url)
+        );
 
-            final List<String> result = new ArrayList<>();
-            final Map<String, IOException> errors = new HashMap<>();
+        final List<String> result = new ArrayList<>();
+        final Map<String, IOException> errors = new HashMap<>();
 
-            while (!processingQueue.isEmpty()) {
-                final Pair<Future<String>, String> pair = processingQueue.take();
-                final Future<String> future = pair.getFirst();
-                try {
-                    final String res = future.get();
+        while (!processingQueue.isEmpty()) {
+            final Pair<Future<String>, String> pair = processingQueue.take();
+            final Future<String> future = pair.getFirst();
+            try {
+                final String res = future.get();
 
-                    if (res != null && !errors.containsKey(res)) {
-                        result.add(res);
-                    }
-
-                } catch (ExecutionException e) {
-                    final Throwable cause = e.getCause();
-                    errors.put(pair.getSecond(), (IOException) cause);
-                    continue;
+                if (res != null && !errors.containsKey(res)) {
+                    result.add(res);
                 }
-            }
-            return new Result(result, errors);
-        } catch (
-                MalformedURLException e)
 
-        {
-            return new Result(Collections.emptyList(), Collections.singletonMap(url, e));
+            } catch (ExecutionException e) {
+                final Throwable cause = e.getCause();
+                errors.put(pair.getSecond(), (IOException) cause);
+                continue;
+            }
         }
+        return new Result(result, errors);
     }
 
     private class ExtractionCallable implements Callable<String> {

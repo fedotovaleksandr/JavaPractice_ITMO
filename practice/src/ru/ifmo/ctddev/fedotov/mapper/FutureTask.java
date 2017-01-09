@@ -1,6 +1,7 @@
 package ru.ifmo.ctddev.fedotov.mapper;
 
 import javax.lang.model.type.UnionType;
+import java.util.concurrent.BlockingQueue;
 import java.util.function.Function;
 
 /**
@@ -10,29 +11,36 @@ public class FutureTask<R, T> {
 
     private Function<T, R> function;
     private T item;
+    private int i;
 
 
     private R result = null;
+    volatile BlockingQueue<FutureTask> resolvedTasks;
 
-
-    FutureTask(Function<T, R> function, T item) {
-
-        this.function = function;
-        this.item = item;
+    public int getI() {
+        return i;
     }
 
-    void doWork() {
+    FutureTask(Function<T, R> function, T item, int i,BlockingQueue<FutureTask> resolvedTasks) {
+        this.resolvedTasks = resolvedTasks;
+        this.function = function;
+        this.item = item;
+        this.i = i;
+    }
+
+    void doWork() throws InterruptedException {
         if (!canceled) {
             this.setStatus(Status.RUNNING);
             this.result = this.function.apply(this.item);
         }
         this.setStatus(Status.COMPLETE);
+        this.resolvedTasks.put(this);
     }
 
 
     private boolean canceled = false;
 
-    void cancel() {
+    synchronized void cancel() {
         this.canceled = true;
     }
 
@@ -46,14 +54,14 @@ public class FutureTask<R, T> {
         return status;
     }
 
-    private synchronized void setStatus(Status status){
+    private synchronized void setStatus(Status status) {
         this.status = status;
     }
 
     static enum Status {
-        COMPLETE ,
-        WAIT ,
-         RUNNING ,
+        COMPLETE,
+        WAIT,
+        RUNNING,
 
     }
 }

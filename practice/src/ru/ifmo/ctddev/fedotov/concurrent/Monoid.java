@@ -22,7 +22,8 @@ public class Monoid<T> implements InterfaceMonoid<T> {
 
     @Override
     public T append(T a, T b) {
-        return operator.apply(a, b);
+            return operator.apply(a, b);
+
     }
 
 }

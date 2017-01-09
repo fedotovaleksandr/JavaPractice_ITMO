@@ -12,37 +12,24 @@ import java.util.stream.Collectors;
  */
 public class ParallelMapperImpl implements ParallelMapper {
 
+    private final int threadsCount;
     private ThreadPoolExecutor threadPoolExecutor;
 
-    public  ParallelMapperImpl(int threads) {
+    public ParallelMapperImpl(int threads) {
+        this.threadsCount = threads;
         this.threadPoolExecutor = new ThreadPoolExecutor(threads);
+    }
+
+    public int getThreadsCount() {
+        return threadsCount;
     }
 
     @Override
     public <T, R> List<R> map(Function<? super T, ? extends R> function, List<? extends T> list) throws InterruptedException {
         try {
-            final Collection<FutureTask<R, T>> futureTasks = this.threadPoolExecutor.createTasks(function, list);
-            this.threadPoolExecutor.continueProcess();
+            return this.threadPoolExecutor.executeTasks(function, list);
 
-            while (!this.threadPoolExecutor.isComplete()) {
-                //wait
-                boolean tasksComlete = true;
-                for (FutureTask task : futureTasks
-                        ) {
-                    tasksComlete &= task.getStatus() == FutureTask.Status.COMPLETE;
-
-                }
-                if (tasksComlete) {
-                    break;
-                }
-            }
-            final List<R> result = new ArrayList<>();
-            for (FutureTask<R, T> task : futureTasks
-                    ) {
-                result.add(task.getResult());
-            }
-            return result;
-        } catch (ArrayIndexOutOfBoundsException e){
+        } catch (ArrayIndexOutOfBoundsException e) {
             e.printStackTrace();
             throw e;
         }
@@ -53,23 +40,4 @@ public class ParallelMapperImpl implements ParallelMapper {
         this.threadPoolExecutor.shutdown();
     }
 
-    public static void main(String[] args) throws InterruptedException {
-        ParallelMapperImpl pm = new ParallelMapperImpl(4);
-        IterativeParallelism it = new IterativeParallelism(pm);
-
-        Integer result = it.<Integer>maximum(4,pm.randomList(10_000), Comparator.<Integer>comparingInt(v -> v / 100));
-        System.out.print(result);
-        pm.close();
-
-    }
-
-    private final Random random = new Random(3257083275083275083L);
-    protected  List<Integer> randomList(final int size) {
-        final List<Integer> pool = random.ints(Math.min(size, 1000_000)).boxed().collect(Collectors.toList());
-        final List<Integer> result = new ArrayList<>();
-        for (int i = 0; i < size; i++) {
-            result.add(pool.get(random.nextInt(pool.size())));
-        }
-        return result;
-    }
 }

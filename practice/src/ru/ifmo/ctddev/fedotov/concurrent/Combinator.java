@@ -27,7 +27,7 @@ public class Combinator<T, R> {
 
     public Combinator(List<T> elements,int chunkSize, InterfaceMonoid<R> monoid, Function<T, R> functor, ParallelMapper mapper) {
         this.elements = elements;
-        this.chunkSize = chunkSize;
+        this.chunkSize = chunkSize > 0 ? chunkSize : 1;
         this.monoid = monoid;
         this.functor = functor;
         this.mapper = mapper;
@@ -65,6 +65,7 @@ public class Combinator<T, R> {
         Accumulator<R> accum = new Accumulator<>(this.monoid);
 
         for (int left = 0, index = 0; left < this.elements.size(); left += chunkSize, index++) {
+
             int right = Math.min(left + chunkSize, this.elements.size());
             List<T> subList = elements.subList(left, right);
             List<R> result = this.mapper.<T,R>map(this.functor,subList);

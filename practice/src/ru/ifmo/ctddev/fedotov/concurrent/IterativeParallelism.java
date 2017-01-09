@@ -48,7 +48,7 @@ public class IterativeParallelism implements ScalarIP {
 
     @Override
     public <T> boolean any(int i, List<? extends T> list, Predicate<? super T> predicate) throws InterruptedException {
-        final InterfaceMonoid<Boolean> monoid = new Monoid<>(Boolean::logicalAnd, () -> Boolean.FALSE);
+        final InterfaceMonoid<Boolean> monoid = new Monoid<>(Boolean::logicalOr, () -> Boolean.FALSE);
         int chunkSize = list.size() / i;
         Combinator<T, Boolean> combinator = this.createCombinator((List<T>) list, chunkSize, monoid, predicate::test);
         return combinator.process();
